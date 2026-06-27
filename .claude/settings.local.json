@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell -ExecutionPolicy Bypass -File \".specify/scripts/powershell/setup-plan.ps1\" -Json)",
+      "Bash(find c:prasannaTrainingPlanScrapingAgentAPP_SERVICEapp -type f -name *.py)",
+      "Bash(ls -la \"c:\\\\prasanna\\\\TrainingPlan\\\\ScrapingAgent\\\\APP_SERVICE\\\\reactapp\"\" | grep -E \"^d \")"
+    ]
+  }
+}
