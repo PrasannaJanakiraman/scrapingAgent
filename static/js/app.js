@@ -110,6 +110,19 @@ function closeModal() {
   document.getElementById("manage-sources-modal").classList.add("hidden");
 }
 
+function openDetailModal(item) {
+  document.getElementById("detail-title").textContent = item.sourceName || "Untitled";
+  document.getElementById("detail-category").textContent = item.category || "";
+  document.getElementById("detail-country").textContent = item.country || "";
+  document.getElementById("detail-summary").textContent = item.summary || "No summary available";
+  document.getElementById("detail-scraped").textContent = item.scrapedData || "No content available";
+  document.getElementById("detail-modal").classList.remove("hidden");
+}
+
+function closeDetailModal() {
+  document.getElementById("detail-modal").classList.add("hidden");
+}
+
 /* File upload */
 async function uploadFile() {
   var fileInput = document.getElementById("scrape-file-input");
@@ -160,6 +173,9 @@ async function uploadFile() {
 let selectedCategory = null;
 let selectedStatus = null;
 let selectedCountry = null;
+let currentPage = 1;
+const PAGE_SIZE = 5;
+let allItems = [];
 
 async function populateFilters() {
   try {
@@ -189,10 +205,57 @@ async function applyFilters() {
   showLoading();
   try {
     const data = await fetchItems(selectedCategory, selectedStatus, selectedCountry);
-    renderCards(data.items);
+    allItems = data.items || [];
+    currentPage = 1;
+    renderPage();
   } catch (error) {
     showError("Unable to connect to the server. Please try again later.");
   }
+}
+
+function renderPage() {
+  var totalPages = Math.max(1, Math.ceil(allItems.length / PAGE_SIZE));
+  if (currentPage > totalPages) currentPage = totalPages;
+  var start = (currentPage - 1) * PAGE_SIZE;
+  var pageItems = allItems.slice(start, start + PAGE_SIZE);
+  renderCards(pageItems);
+  renderPagination(totalPages);
+}
+
+function renderPagination(totalPages) {
+  var existing = document.querySelector(".pagination");
+  if (existing) existing.remove();
+
+  if (allItems.length <= PAGE_SIZE) return;
+
+  var feed = document.querySelector(".feed");
+  var pag = document.createElement("div");
+  pag.className = "pagination";
+
+  var prevBtn = document.createElement("button");
+  prevBtn.className = "pagination-btn";
+  prevBtn.textContent = "Previous";
+  prevBtn.disabled = currentPage <= 1;
+  prevBtn.addEventListener("click", function () {
+    if (currentPage > 1) { currentPage--; renderPage(); }
+  });
+
+  var info = document.createElement("span");
+  info.className = "pagination-info";
+  info.textContent = "Page " + currentPage + " of " + totalPages;
+
+  var nextBtn = document.createElement("button");
+  nextBtn.className = "pagination-btn";
+  nextBtn.textContent = "Next";
+  nextBtn.disabled = currentPage >= totalPages;
+  nextBtn.addEventListener("click", function () {
+    if (currentPage < totalPages) { currentPage++; renderPage(); }
+  });
+
+  pag.appendChild(prevBtn);
+  pag.appendChild(info);
+  pag.appendChild(nextBtn);
+  feed.appendChild(pag);
 }
 
 function renderCards(items) {
@@ -220,12 +283,27 @@ function renderCards(items) {
 
     const breadcrumb = document.createElement("div");
     breadcrumb.className = "card-breadcrumb";
-    var parts = [item.country, item.category, item.status].filter(function (p) { return p; });
-    breadcrumb.textContent = parts.join(" > ") || "Unknown";
+    [item.category, item.country].forEach(function (val) {
+      if (!val) return;
+      var tag = document.createElement("span");
+      tag.className = "detail-tag";
+      tag.textContent = val;
+      breadcrumb.appendChild(tag);
+    });
+
+    var viewBtn = document.createElement("button");
+    viewBtn.className = "view-btn";
+    viewBtn.textContent = "View";
+    viewBtn.addEventListener("click", function () { openDetailModal(item); });
+
+    var cardFooter = document.createElement("div");
+    cardFooter.className = "card-footer";
+    cardFooter.appendChild(breadcrumb);
+    cardFooter.appendChild(viewBtn);
 
     card.appendChild(title);
     card.appendChild(summary);
-    card.appendChild(breadcrumb);
+    card.appendChild(cardFooter);
     feed.appendChild(card);
   });
 }
@@ -235,7 +313,9 @@ async function init() {
   try {
     await populateFilters();
     const data = await fetchItems();
-    renderCards(data.items);
+    allItems = data.items || [];
+    currentPage = 1;
+    renderPage();
   } catch (error) {
     showError("Unable to connect to the server. Please try again later.");
   }
@@ -270,8 +350,17 @@ async function init() {
     if (e.target === this) closeModal();
   });
 
+  document.getElementById("detail-modal-close").addEventListener("click", closeDetailModal);
+
+  document.getElementById("detail-modal").addEventListener("click", function (e) {
+    if (e.target === this) closeDetailModal();
+  });
+
   document.addEventListener("keydown", function (e) {
-    if (e.key === "Escape") closeModal();
+    if (e.key === "Escape") {
+      closeModal();
+      closeDetailModal();
+    }
   });
 }
 

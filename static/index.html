@@ -53,6 +53,28 @@
       </div>
     </div>
   </div>
+  <div id="detail-modal" class="modal-overlay hidden">
+    <div class="modal-content detail-modal-content">
+      <div class="modal-header">
+        <h2 id="detail-title"></h2>
+        <button class="modal-close" id="detail-modal-close">&times;</button>
+      </div>
+      <div class="detail-meta">
+        <span id="detail-category" class="detail-tag"></span>
+        <span id="detail-country" class="detail-tag"></span>
+      </div>
+      <div class="detail-body">
+        <div class="detail-section">
+          <h3>Summary</h3>
+          <div id="detail-summary" class="detail-scroll-box"></div>
+        </div>
+        <div class="detail-section">
+          <h3>Scraped Content</h3>
+          <div id="detail-scraped" class="detail-scroll-box"></div>
+        </div>
+      </div>
+    </div>
+  </div>
   <div class="viewport-warning">This application requires a screen width of 1024px or above. Please resize your browser window.</div>
   <script src="/static/js/app.js" defer></script>
 </body>
