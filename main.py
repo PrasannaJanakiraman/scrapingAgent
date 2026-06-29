@@ -1,18 +1,19 @@
 """FastAPI entry point for the web scraper API."""
 
 import asyncio
+import uuid
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
-from urllib.parse import urlparse
-
 from fastapi import FastAPI, File, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from config_parser import parse_excel_config
-from cosmos_db import delete_all_items, get_all_items
+from cosmos_db import delete_all_items, get_all_items, upsert_item
+from llm_summarise import summarise
 from models import ScrapeResponse
 from scraper import run_crawler_sync
 
@@ -33,6 +34,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 # One scrape at a time — Playwright is resource-heavy and Crawlee uses a
 # single storage directory per process.
@@ -94,6 +97,43 @@ async def scrape(
             traceback.print_exc()
             raise HTTPException(status_code=500, detail=f"Crawler error: {exc}")
 
+    # Build lookup from URL → (country, category) from the Excel config
+    url_meta = {cfg.app_url: {"country": cfg.country, "category": cfg.category} for cfg in configs}
+
+    # Save each scraped page to CosmosDB with LLM summary
+    for page in result.get("results", []):
+        doc_id = str(uuid.uuid4())
+        source_name = (page.get("title") or "").strip() or page.get("source_url", "")
+        scraped_data = page.get("body_text", "")
+        meta = url_meta.get(page.get("source_url", ""), {})
+
+        doc = {
+            "id": doc_id,
+            "sourceId": doc_id,
+            "sourceName": source_name,
+            "url": page.get("source_url", ""),
+            "scrapeDate": datetime.now(timezone.utc).isoformat(),
+            "status": "InProgress",
+            "scrapedData": scraped_data[:50000],
+            "summary": "",
+            "country": meta.get("country", ""),
+            "category": meta.get("category", ""),
+        }
+        upsert_item(doc)
+
+        if scraped_data.strip():
+            try:
+                doc["summary"] = summarise(scraped_data[:8000])
+                doc["status"] = "Success"
+            except Exception:
+                doc["status"] = "Failed"
+                doc["summary"] = "Summarisation failed."
+        else:
+            doc["status"] = "Failed"
+            doc["summary"] = "No content scraped for this page."
+
+        upsert_item(doc)
+
     return result
 
 
@@ -107,41 +147,33 @@ async def delete_all_data():
 # ── UI Data Endpoints ─────────────────────────────────────────────────────────
 
 
-def _derive_category(url: str) -> str:
-    """Extract a human-readable category from a URL's domain."""
-    try:
-        host = urlparse(url).hostname or ""
-        parts = host.replace("www.", "").split(".")
-        return parts[0].title() if parts else "Other"
-    except Exception:
-        return "Other"
-
-
 @app.get("/api/items", tags=["ui"])
 async def get_items(
     category: Optional[str] = Query(None),
     status: Optional[str] = Query(None),
+    country: Optional[str] = Query(None),
 ):
-    """Return all scraped items, optionally filtered by category or status."""
+    """Return all scraped items, optionally filtered by category, status, or country."""
     items = get_all_items()
-    for item in items:
-        item["category"] = _derive_category(item.get("url", ""))
 
     if category:
-        items = [i for i in items if i["category"] == category]
+        items = [i for i in items if i.get("category", "") == category]
     if status:
         items = [i for i in items if i.get("status", "").lower() == status.lower()]
+    if country:
+        items = [i for i in items if i.get("country", "") == country]
 
     return {"items": items}
 
 
 @app.get("/api/filters", tags=["ui"])
 async def get_filters():
-    """Return distinct category and status values for filter dropdowns."""
+    """Return distinct category, status, and country values for filter dropdowns."""
     items = get_all_items()
-    categories = sorted({_derive_category(i.get("url", "")) for i in items})
+    categories = sorted({i.get("category", "") for i in items} - {""})
     statuses = sorted({i.get("status", "Unknown") for i in items})
-    return {"categories": categories, "statuses": statuses}
+    countries = sorted({i.get("country", "") for i in items} - {""})
+    return {"categories": categories, "statuses": statuses, "countries": countries}
 
 
 # ── Serve Frontend ────────────────────────────────────────────────────────────

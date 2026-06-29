@@ -39,7 +39,7 @@
 Start the backend server:
 
 ```bash
-cd c:\prasanna\TrainingPlan\ScrapingAgent\APP_SERVICE\reactapp
+cd c:\prasanna\TrainingPlan\ScrapingAgent\APP_SERVICE\scrapingAgent
 uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 

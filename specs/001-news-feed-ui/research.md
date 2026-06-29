@@ -5,7 +5,7 @@
 ## Research Summary
 
 All technical context items have been resolved. The existing FastAPI
-backend (at `reactapp/main.py`) already provides the two API endpoints
+backend (at `main.py` in the project root) already provides the two API endpoints
 needed (`/api/items` and `/api/filters`) plus CORS middleware and a
 root route for serving `index.html`. No NEEDS CLARIFICATION items
 remain.
@@ -28,16 +28,15 @@ remain.
   backend root. FastAPI serves `index.html` via the existing `GET /`
   route.
 - **Rationale**: The backend already has a `STATIC_DIR` constant
-  pointing to `{backend_root}/static/` and a root route returning
-  `FileResponse(STATIC_DIR / "index.html")`. No backend changes needed.
+  pointing to `{project_root}/static/` and a root route returning
+  `FileResponse(STATIC_DIR / "index.html")`. `StaticFiles` is already
+  imported but not yet mounted — a one-line addition is needed.
 - **Alternatives considered**: Separate dev server with proxy — rejected
   as it adds infrastructure complexity. Inline HTML in backend
   templates — rejected as it couples frontend to Python code.
-- **Note**: The backend currently only serves `index.html` at `/`. CSS
-  and JS files will need a `StaticFiles` mount added (e.g.,
-  `app.mount("/static", StaticFiles(directory="static"))`) or the HTML
-  must reference assets via relative paths that the existing route can
-  serve. This is a minor backend change.
+- **Note**: The backend imports `StaticFiles` but does not mount it yet.
+  A single line is needed after the `app` instance:
+  `app.mount("/static", StaticFiles(directory="static"), name="static")`.
 
 ### D-003: API Integration Pattern
 
@@ -141,11 +140,11 @@ Serves `static/index.html` as `FileResponse`.
 
 ## Static File Serving Note
 
-The backend needs a `StaticFiles` mount to serve CSS/JS assets:
+The backend already imports `StaticFiles` but does not mount it yet.
+Add this line to `main.py` after the `app` instance is created:
 ```python
-from fastapi.staticfiles import StaticFiles
 app.mount("/static", StaticFiles(directory="static"), name="static")
 ```
 
-This is a one-line addition to `main.py`. HTML references would use
-paths like `/static/css/styles.css` and `/static/js/app.js`.
+HTML references use paths like `/static/css/styles.css` and
+`/static/js/app.js`.

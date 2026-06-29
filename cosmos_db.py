@@ -22,7 +22,7 @@ def upsert_item(item: dict) -> dict:
 
 def get_all_items() -> list[dict]:
     """Return all documents from the container."""
-    query = "SELECT c.id, c.sourceId, c.sourceName, c.url, c.scrapeDate, c.status, c.scrapedData, c.summary FROM c"
+    query = "SELECT c.id, c.sourceId, c.sourceName, c.url, c.scrapeDate, c.status, c.scrapedData, c.summary, c.country, c.category FROM c"
     return list(_container.query_items(query=query, enable_cross_partition_query=True))
 
 

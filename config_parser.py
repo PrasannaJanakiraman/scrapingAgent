@@ -31,6 +31,8 @@ class ScrapingConfig:
     next_page_texts: list = field(default_factory=list)
     remove_content: list = field(default_factory=list)
     single_page: bool = False
+    country: str = ""
+    category: str = ""
 
 
 def parse_excel_config(file_bytes: bytes) -> list[ScrapingConfig]:
@@ -53,6 +55,11 @@ def parse_excel_config(file_bytes: bytes) -> list[ScrapingConfig]:
             else False
         )
 
+        country_val = row.get("Country")
+        country = str(country_val).strip() if country_val and not isinstance(country_val, float) else ""
+        category_val = row.get("Category")
+        category = str(category_val).strip() if category_val and not isinstance(category_val, float) else ""
+
         configs.append(
             ScrapingConfig(
                 app_url=str(app_url).strip(),
@@ -65,6 +72,8 @@ def parse_excel_config(file_bytes: bytes) -> list[ScrapingConfig]:
                 next_page_texts=parse_config_list(row.get("Next Page Text Patterns")),
                 remove_content=parse_config_list(row.get("Remove Content"), lowercase=False),
                 single_page=single_page,
+                country=country,
+                category=category,
             )
         )
 

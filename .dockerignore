@@ -1,3 +1,4 @@
+.git/
 .env
 __pycache__/
 *.pyc
@@ -9,3 +10,7 @@ dist/
 Thumbs.db
 *.tmp
 *.swp
+specs/
+.specify/
+.claude/
+.vscode/

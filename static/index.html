@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Regulatory News Feed</title>
+  <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+  <nav class="top-bar">
+    <span class="top-bar-title">Regulatory News Feed</span>
+    <button id="manage-sources-btn" class="manage-sources-btn">Manage Sources</button>
+  </nav>
+  <aside class="sidebar">
+    <div class="filter-group">
+      <label for="category-filter">Category</label>
+      <select id="category-filter">
+        <option value="">All</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label for="country-filter">Country</label>
+      <select id="country-filter">
+        <option value="">All</option>
+      </select>
+    </div>
+    <!-- <div class="filter-group">
+      <label for="status-filter">State</label>
+      <select id="status-filter">
+        <option value="">All</option>
+      </select>
+    </div> -->
+    <button id="clear-filters" class="clear-filters-btn">Clear Filters</button>
+  </aside>
+  <main class="feed"></main>
+  <div id="manage-sources-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Manage Sources</h2>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="upload-section">
+          <label for="scrape-file-input" class="upload-label">Upload Excel Configuration</label>
+          <input type="file" id="scrape-file-input" accept=".xlsx">
+          <button id="upload-btn" class="upload-btn">Upload &amp; Scrape</button>
+          <div id="upload-status" class="upload-status"></div>
+        </div>
+        <div class="source-table-section">
+          <h3>Scraped Sources</h3>
+          <div id="source-table-container"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="viewport-warning">This application requires a screen width of 1024px or above. Please resize your browser window.</div>
+  <script src="/static/js/app.js" defer></script>
+</body>
+</html>

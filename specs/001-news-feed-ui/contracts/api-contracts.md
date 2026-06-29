@@ -7,7 +7,7 @@
 The frontend consumes two existing backend endpoints. These contracts
 document the expected request/response shapes that the frontend
 depends on. The backend already implements these endpoints in
-`reactapp/main.py`.
+`main.py`.
 
 ---
 
@@ -63,6 +63,7 @@ Fetch scraped items, optionally filtered by category and/or status.
   "items": [
     {
       "id": "abc123",
+      "sourceId": "src-001",
       "sourceName": "Regulatory Body Notice #42",
       "url": "https://regulatory-body.gov/notice/42",
       "scrapeDate": "2026-06-25T14:30:00Z",
@@ -80,6 +81,7 @@ Fetch scraped items, optionally filtered by category and/or status.
 |-------|------|----------|-------------|
 | items | array | No | Array of scraped item objects |
 | items[].id | string | No | Unique document identifier |
+| items[].sourceId | string | No | Partition key (not displayed) |
 | items[].sourceName | string | No | Human-readable source name |
 | items[].url | string | No | Original source URL |
 | items[].scrapeDate | string | No | ISO 8601 timestamp |
