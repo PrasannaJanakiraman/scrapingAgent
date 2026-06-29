@@ -1,6 +1,9 @@
 """LLM summarisation module using Azure OpenAI."""
 
+import logging
 import os
+
+logger = logging.getLogger(__name__)
 
 from dotenv import load_dotenv
 from openai import AzureOpenAI
@@ -16,8 +19,9 @@ _client = AzureOpenAI(
 
 def summarise(text: str) -> str:
     """Summarise the given text into 1-5 lines using Azure OpenAI."""
+    deployment = os.environ.get("AZURE_OPENAI_DEPLOYMENT_NAME", "gpt-5")
     response = _client.chat.completions.create(
-        model=os.environ.get("AZURE_OPENAI_DEPLOYMENT_NAME", "gpt-5"),
+        model=deployment,
         messages=[
             {
                 "role": "system",
@@ -29,4 +33,11 @@ def summarise(text: str) -> str:
             },
         ],
     )
-    return response.choices[0].message.content
+    content = response.choices[0].message.content
+    if not content:
+        logger.warning(
+            "LLM returned empty content. deployment=%s, finish_reason=%s",
+            deployment,
+            response.choices[0].finish_reason,
+        )
+    return content or ""

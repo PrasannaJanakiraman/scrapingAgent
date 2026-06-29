@@ -1,7 +1,8 @@
 "use strict";
 
-const API_BASE = "scrapingagent-c6f0c9c6fzd0hmhk.eastus2-01.azurewebsites.net";
-
+const API_BASE = (location.hostname === "localhost" || location.hostname === "127.0.0.1")
+  ? "http://127.0.0.1:8001"
+  : "https://scrapingagent-c6f0c9c6fzd0hmhk.eastus2-01.azurewebsites.net";
 async function fetchItems(category, status, country) {
   const params = new URLSearchParams();
   if (category) params.set("category", category);

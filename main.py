@@ -123,8 +123,13 @@ async def scrape(
 
         if scraped_data.strip():
             try:
-                doc["summary"] = summarise(scraped_data[:8000])
-                doc["status"] = "Success"
+                summary = summarise(scraped_data[:8000])
+                if summary:
+                    doc["summary"] = summary
+                    doc["status"] = "Success"
+                else:
+                    doc["status"] = "Failed"
+                    doc["summary"] = "Summarisation returned empty response."
             except Exception:
                 doc["status"] = "Failed"
                 doc["summary"] = "Summarisation failed."
